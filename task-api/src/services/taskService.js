@@ -9,7 +9,8 @@ const findById = (id) => tasks.find((t) => t.id === id);
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const safePage = page < 1 ? 1 : page; // page numbers are expected to be 1-based
+  const offset = (safePage - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -28,7 +29,14 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({
+  title,
+  description = '',
+  status = 'todo',
+  priority = 'medium',
+  dueDate = null,
+  assignee = null,
+}) => {
   const task = {
     id: uuidv4(),
     title,
@@ -37,6 +45,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     priority,
     dueDate,
     completedAt: null,
+    assignee,
     createdAt: new Date().toISOString(),
   };
   tasks.push(task);
@@ -76,6 +85,16 @@ const completeTask = (id) => {
   return updated;
 };
 
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const index = tasks.findIndex((t) => t.id === id);
+  const updated = { ...task, assignee };
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +109,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
